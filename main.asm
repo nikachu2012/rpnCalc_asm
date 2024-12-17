@@ -108,12 +108,13 @@ _intToStr_loop1:
 
 _intToStr_exit1:
     mov r8, 0 ; ループカウンタの0クリア
+    inc rbp
 
 _intToStr_loop2:
-    cmp rbp, rsp
-    je _intToStr_ret ; rbp==rbpになるまでループ
+    cmp rsp, rbp
+    jl _intToStr_ret ; rsp<rbpになるまでループ
 
-    mov r10b, BYTE [rbp + 1]
+    mov r10b, BYTE [rbp]
     mov BYTE [rsi + r8], r10b ; rbp+1の値をbufにコピー
 
     inc rbp
