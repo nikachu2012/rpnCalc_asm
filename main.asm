@@ -63,5 +63,5 @@ msg:
 msg_len: equ $ - msg
 
 teststr:
-    db "12345", 0
-teststr_len: equ $ - teststr
+    db "255", 0
+teststr_len: equ $ - teststr - 1
