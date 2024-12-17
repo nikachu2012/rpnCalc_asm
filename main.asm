@@ -97,7 +97,16 @@ _intToStr:
     mov rax, rdi ; 演算用にdataをコピー
     mov rcx, 10 ; 割るための定数
 
+    ; 最初から0のときの処理
+    cmp rax, 0
+    jne _intToStr_loop1 ; 呼び出し時に0でないとき
+    
+    mov BYTE [rbp], 0x30 ; 呼び出し時に0なら'0'を積んで戻る
+    dec rbp
+    jmp _intToStr_exit1
+
 _intToStr_loop1:
+    ; 数値を文字に変換してスタックに積む
     cmp rax, 0
     je _intToStr_exit1 ; raxが0になったら戻る
 
@@ -110,6 +119,7 @@ _intToStr_loop1:
     jmp _intToStr_loop1
 
 _intToStr_exit1:
+    ; スタックからバッファに文字列をコピー
     mov r8, 0 ; ループカウンタの0クリア
     inc rbp
 
@@ -125,7 +135,7 @@ _intToStr_loop2:
     jmp _intToStr_loop2
 
 _intToStr_ret:
-    mov BYTE [rsi + r8], 0 ; 末尾にヌル文字を追
+    mov BYTE [rsi + r8], 0 ; 末尾にヌル文字を追加
     
     pop rbp
     ret
