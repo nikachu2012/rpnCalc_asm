@@ -9,6 +9,8 @@ global _start
 
 section .text
 _start:
+    push rbp
+    mov rbp, rsp
 
     ; write syscall
     mov rax, 1 ; syscall number 1 = write
@@ -45,6 +47,7 @@ _start:
     mov rdi, 0 ; return code
     syscall
 
+    pop rbp
     ret
 
 ; ===============================================================
