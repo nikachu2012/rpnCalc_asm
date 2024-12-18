@@ -1,5 +1,5 @@
 TARGET = rpncalc
-SRCS = $(wildcard *.asm)
+SRCS = main.asm
 OBJS = $(SRCS:.asm=.o)
 
 .PHONY: all

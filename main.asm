@@ -2,6 +2,9 @@
 %include "intToStr.asm"
 %include "strlen.asm"
 
+; スタックの段数
+%define STACK_DAN 4
+
 global _start
 
 ; Reverse Polish Notation Calculator
@@ -16,46 +19,82 @@ _start:
     push rbp
     mov rbp, rsp
 
+    sub rsp, STACK_DAN*8 ; 4段分のスタックを確保
+
     ; get argc
     cmp QWORD [rbp + 8], 2
     jl errReturn ; argc < 2 なら戻る
 
-    ; write syscall
-    mov rax, 1 ; syscall number 1 = write
-    mov rdi, 1 ; file desc 1 = stdout
-    mov rsi, msg ; msg ptr
-    mov rdx, msg_len ; msg length
-    syscall
+    ; get argv
+    mov r8, QWORD [rbp + 16 + 8] ; 第1引数のアドレスをコピー
+    mov r9, 0 ; カウンタを0に
     
-    mov rdi, teststr
-    mov rsi, teststr_len
+    mov rdi, r8 ; 数値の最初のアドレスを記憶
+    add rdi, r9 ; rdi=r8+r9
+
+    mov r10, 0 ; スタックの最新値を記憶
+
+_start_loop1:
+    ; 1文字ごとのループ
+    cmp BYTE [rdi + r9], 0 ; ヌル文字
+    je _start_exit1 ; ヌル文字なら戻る
+
+    cmp BYTE [rdi + r9], ' ' ; 区切り文字のとき
+    je _start_if_isSEP
+
+    cmp BYTE [rdi + r9], '+' ; +のとき
+    je _start_if1_isADD
+
+    cmp BYTE [rdi + r9], '+' ; -のとき
+    je _start_if1_isADD
+
+    cmp BYTE [rdi + r9], '*' ; *のとき
+    je _start_if1_isADD
+
+    cmp BYTE [rdi + r9], '/' ; /のとき
+    je _start_if1_isADD
+
+    ; 数値の時
+    inc r9
+    jmp _start_loop1
+
+_start_if_isSEP:
+
+    ; rdiはすでに入っている
+    mov rsi, r9
     call _strToInt
 
-    mov rdi, 255
-    mov rsi, buf
-    mov rdx, buf_len
-    call _intToStr
-    
-    ; write syscall
-    mov rax, 1 ; syscall number 1 = write
-    mov rdi, 1 ; file desc 1 = stdout
-    mov rsi, buf ; msg ptr
-    mov rdx, buf_len ; msg length
-    syscall
+    mov QWORD [rbp + r10], rax ; オペランドの値を積む
+    sub r10, 8 ; スタックを上に上げる
 
-    ; write syscall
-    mov rax, 1 ; syscall number 1 = write
-    mov rdi, 1 ; file desc 1 = stdout
-    mov rsi, linefeed ; msg ptr
-    mov rdx, 1 ; msg length
-    syscall
+    add rdi, r9
+    inc rdi ; rdi = rdi+r9+1にする(空白文字の次の文字)
+    mov r9, 0 
+
+    jmp _start_loop1
+
+_start_if1_isADD:
+    inc r9
+    jmp _start_if1_exit
+_start_if1_isDEC:
+    inc r9
+    jmp _start_if1_exit
+_start_if1_isMUL:
+    inc r9
+    jmp _start_if1_exit
+_start_if1_isDIV:
+    inc r9
+    jmp _start_if1_exit
+_start_if1_exit:
+
+_start_exit1:
+    leave
 
     ; exit syscall
     mov rax, 60 ; syscall number 1 = exit
     mov rdi, 0 ; return code
     syscall
 
-    pop rbp
     ret
 
 errReturn:
