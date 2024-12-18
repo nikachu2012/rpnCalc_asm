@@ -16,6 +16,10 @@ _start:
     push rbp
     mov rbp, rsp
 
+    ; get argc
+    cmp QWORD [rbp + 8], 2
+    jl errReturn ; argc < 2 なら戻る
+
     ; write syscall
     mov rax, 1 ; syscall number 1 = write
     mov rdi, 1 ; file desc 1 = stdout
@@ -54,6 +58,22 @@ _start:
     pop rbp
     ret
 
+errReturn:
+    ; write syscall
+    mov rax, 1 ; write
+    mov rdi, 1 ; stdout
+    mov rsi, argLessMessage ; errMsg
+    mov rdx, argLessMessage_len
+    syscall
+
+    pop rbp
+
+    mov rax, 60 ; syscall number 1 = exit
+    mov rdi, 0 ; return code
+    syscall
+    ret
+
+
 section .bss
 buf:
     resb 30
@@ -71,3 +91,7 @@ linefeed:
 teststr:
     db "255", 0
 teststr_len: equ $ - teststr - 1
+
+argLessMessage:
+    db 'Usage: ./rpncalc "2 5 3 5+++"', 0x0a, 0
+argLessMessage_len: equ $ - argLessMessage - 1
