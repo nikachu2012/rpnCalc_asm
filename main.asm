@@ -29,10 +29,9 @@ _start:
     mov r8, QWORD [rbp + 16 + 8] ; 第1引数のアドレスをコピー
     mov r9, 0 ; カウンタを0に
     
-    mov rdi, r8 ; 数値の最初のアドレスを記憶
-    add rdi, r9 ; rdi=r8+r9
+    mov rdi, r8 ; オペランド値の最初のアドレスを記憶
 
-    mov r10, 0 ; スタックの最新値を記憶
+    mov r10, 0 ; スタックのオフセットを記憶
 
 _start_loop1:
     ; 1文字ごとのループ
@@ -45,14 +44,14 @@ _start_loop1:
     cmp BYTE [rdi + r9], '+' ; +のとき
     je _start_if1_isADD
 
-    cmp BYTE [rdi + r9], '+' ; -のとき
-    je _start_if1_isADD
+    cmp BYTE [rdi + r9], '-' ; -のとき
+    je _start_if1_isDEC
 
     cmp BYTE [rdi + r9], '*' ; *のとき
-    je _start_if1_isADD
+    je _start_if1_isMUL
 
     cmp BYTE [rdi + r9], '/' ; /のとき
-    je _start_if1_isADD
+    je _start_if1_isDIV
 
     ; 数値の時
     inc r9
@@ -74,20 +73,39 @@ _start_if_isSEP:
     jmp _start_loop1
 
 _start_if1_isADD:
+    mov rax, QWORD [rbp + r10 + 8] ; 現在位置から1段下のスタックを取得
+    add QWORD [rbp + r10 + 16], rax  ; 2段下と1段下を加算
+
+    add r10, 8 ; スタックを一段下げる(加算するとオペランドが減るため)
+
     inc r9
-    jmp _start_if1_exit
+    jmp _start_loop1
 _start_if1_isDEC:
     inc r9
-    jmp _start_if1_exit
+    jmp _start_loop1
 _start_if1_isMUL:
     inc r9
-    jmp _start_if1_exit
+    jmp _start_loop1
 _start_if1_isDIV:
     inc r9
-    jmp _start_if1_exit
+    jmp _start_loop1
 _start_if1_exit:
+    jmp _start_loop1
 
 _start_exit1:
+    ; スタック最上段をを出力
+    mov rdi, QWORD [rbp + r10 + 8] ; 最上段のスタックを取得
+    mov rsi, buf
+    mov rdx, buf_len
+    call _intToStr
+
+    ; write syscall
+    mov rax, 1 ; write
+    mov rdi, 1 ; stdout
+    mov rsi, buf ; errMsg
+    mov rdx, buf_len
+    syscall
+
     leave
 
     ; exit syscall
