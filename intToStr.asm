@@ -25,8 +25,8 @@ _intToStr:
     cmp rax, 0
     jne _intToStr_loop1 ; 呼び出し時に0でないとき
     
-    mov BYTE [rbp + r8], 0x30 ; 呼び出し時に0なら'0'を積んで戻る
-    dec rbp
+    mov BYTE [rbp + r8], '0' ; 呼び出し時に0なら'0'を積んで戻る
+    dec r8
     jmp _intToStr_exit1
 
 _intToStr_loop1:
