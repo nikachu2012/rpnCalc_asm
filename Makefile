@@ -10,6 +10,6 @@ all: $(TARGET)
 clean:
 	rm -r *.o $(TARGET)
 
-$(TARGET): $(DEP)
+$(TARGET): $(MAIN) $(DEP)
 	nasm -f elf64 -o $(MAINOBJ) $(MAIN)
 	ld -m elf_x86_64 -o $(TARGET) $(MAINOBJ)
