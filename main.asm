@@ -110,10 +110,29 @@ _start_if1_isADD:
 
     jmp _start_loop1
 _start_if1_isDEC:
+    mov rax, QWORD [rbp + r10 + 8] ; 現在位置から1段下のスタックを取得
+    sub QWORD [rbp + r10 + 16], rax  ; 2段下と1段下を減算
+
+    add r10, 8 ; スタックを一段下げる(加算するとオペランドが減るため)
+
     jmp _start_loop1
 _start_if1_isMUL:
+    mov rax, QWORD [rbp + r10 + 16]
+    imul QWORD [rbp + r10 + 8] ; 2段下と1段下を乗算
+    mov QWORD [rbp + r10 + 16], rax ; 下位64bitスタックメモリに代入
+
+    add r10, 8 ; スタックを一段下げる
     jmp _start_loop1
 _start_if1_isDIV:
+    cmp QWORD [rbp + r10 + 8], 0
+    je _start_zeroDivErr ; 割る数が0の時ジャンプ
+
+    mov rdx, 0 ; 余りの0クリア
+    mov rax, QWORD [rbp + r10 + 16]
+    idiv QWORD [rbp + r10 + 8] ; 2段下と1段下を割り算
+    mov QWORD [rbp + r10 + 16], rax ; スタックメモリに代入
+
+    add r10, 8 ; スタックを一段下げる
     jmp _start_loop1
 _start_if1_exit:
     jmp _start_loop1
@@ -146,6 +165,10 @@ _start_stackUnderflowErr:
 
     jmp errReturn
 
+_start_zeroDivErr:
+    stdout zeroDivMsg, zeroDivMsg_len
+
+    jmp errReturn
 _start_missingUsageErr:
     stdout argLessMessage, argLessMessage_len
 
@@ -182,3 +205,7 @@ stackUnderflowMsg_len: equ $ - stackUnderflowMsg - 1
 stackOverflowMsg:
     db 'Stack overflowed. (TOOOOOO MANY NUMBER OPERANDS)', 0x0a, 0
 stackOverflowMsg_len: equ $ - stackOverflowMsg - 1
+
+zeroDivMsg:
+    db 'Cannot be divided by 0.', 0x0a, 0
+zeroDivMsg_len: equ $ - zeroDivMsg - 1
