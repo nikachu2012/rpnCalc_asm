@@ -113,7 +113,6 @@ _start_exit1:
     ; スタック最上段をを出力
     mov rdi, QWORD [rbp + r10 + 8] ; 最上段のスタックを取得
     mov rsi, buf
-    mov rdx, buf_len
     call _intToStr
 
     ; write syscall
@@ -181,7 +180,7 @@ errReturn:
 
 section .bss
 buf:
-    resb 30
+    resb 24
 buf_len: equ $ - buf
 
 
