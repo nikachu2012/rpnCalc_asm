@@ -3,7 +3,7 @@
 %include "strlen.asm"
 
 ; スタックの段数
-%define STACK_DAN 4
+%define STACK_DAN 32
 
 global _start
 
