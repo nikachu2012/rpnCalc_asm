@@ -186,16 +186,8 @@ buf_len: equ $ - buf
 
 
 section .rodata
-msg: 
-    db "Hello, world!", 0x0A, 0
-msg_len: equ $ - msg
-
 linebreak: 
     db 0x0a
-
-teststr:
-    db "255", 0
-teststr_len: equ $ - teststr - 1
 
 argLessMessage:
     db 'Usage: ./rpncalc "2 5 3 5+++"', 0x0a, 0
