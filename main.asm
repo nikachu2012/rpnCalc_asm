@@ -123,6 +123,13 @@ _start_exit1:
     mov rdx, buf_len
     syscall
 
+    ; line break
+    mov rax, 1 ; write
+    mov rdi, 1 ; stdout
+    mov rsi, linebreak ; errMsg
+    mov rdx, 1
+    syscall
+
     leave ; rsp<-rbp, pop rbp
 
     ; exit syscall
@@ -183,7 +190,7 @@ msg:
     db "Hello, world!", 0x0A, 0
 msg_len: equ $ - msg
 
-linefeed: 
+linebreak: 
     db 0x0a
 
 teststr:
