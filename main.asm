@@ -14,6 +14,15 @@ global _start
 ; 楽しちゃダメだから
 ; by BASIC
 
+%macro stdout 2
+    ; write syscall
+    mov rax, 1 ; write
+    mov rdi, 1 ; stdout
+    mov rsi, %1 ; errMsg
+    mov rdx, %2
+    syscall ; ArgLessMessageを出力
+%endmacro
+
 section .text
 _start:
     push rbp
@@ -23,7 +32,7 @@ _start:
 
     ; get argc
     cmp QWORD [rbp + 8], 2
-    jl missingUsageErr ; argc < 2 なら戻る
+    jl _start_missingUsageErr ; argc < 2 なら戻る
 
     ; get argv
     mov r8, QWORD [rbp + 16 + 8] ; 第1引数のアドレスをコピー
@@ -115,19 +124,8 @@ _start_exit1:
     mov rsi, buf
     call _intToStr
 
-    ; write syscall
-    mov rax, 1 ; write
-    mov rdi, 1 ; stdout
-    mov rsi, buf ; errMsg
-    mov rdx, buf_len
-    syscall
-
-    ; line break
-    mov rax, 1 ; write
-    mov rdi, 1 ; stdout
-    mov rsi, linebreak ; errMsg
-    mov rdx, 1
-    syscall
+    stdout buf, buf_len ; 計算結果の表示
+    stdout linebreak, 1 ; 改行
 
     leave ; rsp<-rbp, pop rbp
 
@@ -139,32 +137,17 @@ _start_exit1:
     ret
 
 _start_stackOverflowErr:
-    ; write syscall
-    mov rax, 1 ; write
-    mov rdi, 1 ; stdout
-    mov rsi, stackOverflowMsg ; エラーメッセージ
-    mov rdx, stackOverflowMsg_len
-    syscall
+    stdout stackOverflowMsg, stackOverflowMsg_len
 
     jmp errReturn
 
 _start_stackUnderflowErr:
-    ; write syscall
-    mov rax, 1 ; write
-    mov rdi, 1 ; stdout
-    mov rsi, stackUnderflowMsg ; エラーメッセージ
-    mov rdx, stackUnderflowMsg_len
-    syscall
+    stdout stackUnderflowMsg, stackUnderflowMsg_len
 
     jmp errReturn
 
-missingUsageErr:
-    ; write syscall
-    mov rax, 1 ; write
-    mov rdi, 1 ; stdout
-    mov rsi, argLessMessage ; errMsg
-    mov rdx, argLessMessage_len
-    syscall ; ArgLessMessageを出力
+_start_missingUsageErr:
+    stdout argLessMessage, argLessMessage_len
 
     jmp errReturn
     
