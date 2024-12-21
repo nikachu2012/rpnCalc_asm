@@ -38,27 +38,25 @@ _start_loop1:
     cmp BYTE [rdi + r9], 0 ; ヌル文字
     je _start_exit1 ; ヌル文字なら戻る
 
-    cmp BYTE [rdi + r9], ' ' ; 区切り文字のとき
-    je _start_if_isSEP
-
-    cmp BYTE [rdi + r9], '+' ; +のとき
-    je _start_if1_isADD
-
-    cmp BYTE [rdi + r9], '-' ; -のとき
-    je _start_if1_isDEC
-
-    cmp BYTE [rdi + r9], '*' ; *のとき
-    je _start_if1_isMUL
-
-    cmp BYTE [rdi + r9], '/' ; /のとき
-    je _start_if1_isDIV
+    ; 0x30 <= rdi+r9 <= 0x39
+    cmp BYTE [rdi + r9], 0x30-1
+    jle _start_if_notNumber    ; 数値でないときにジャンプ
+    cmp BYTE [rdi + r9], 0x39
+    jg _start_if_notNumber     ; 数値でないときにジャンプ
 
     ; 数値の時
     inc r9
     jmp _start_loop1
 
-_start_if_isSEP:
+_start_if_notNumber:
 
+    ; 0x30 <= rdi+r9-1 <= 0x39
+    cmp BYTE [rdi + r9 - 1], 0x30-1
+    jle _start_if_operand     ; 前が数値でないときはスタックに積まずにオペランド処理に進む
+    cmp BYTE [rdi + r9 - 1], 0x39
+    jg _start_if_operand      ; 前が数値でないときはスタックに積まずにオペランド処理に進む
+
+    ; スタックに値を積む処理
     ; rdiはすでに入っている
     mov rsi, r9
     call _strToInt
@@ -66,11 +64,29 @@ _start_if_isSEP:
     mov QWORD [rbp + r10], rax ; オペランドの値を積む
     sub r10, 8 ; スタックを上に上げる
 
+_start_if_operand:
     add rdi, r9
     inc rdi ; rdi = rdi+r9+1にする(空白文字の次の文字)
     mov r9, 0 
 
-    jmp _start_loop1
+    cmp BYTE [rdi - 1], ' ' ; 区切り文字のとき
+    je _start_loop1
+
+    ; スタックを破壊しないかチェック
+    cmp r10, -16
+    jg _start_stackBreakErr 
+
+    cmp BYTE [rdi - 1], '+' ; +のとき
+    je _start_if1_isADD
+
+    cmp BYTE [rdi - 1], '-' ; -のとき
+    je _start_if1_isDEC
+
+    cmp BYTE [rdi - 1], '*' ; *のとき
+    je _start_if1_isMUL
+
+    cmp BYTE [rdi - 1], '/' ; /のとき
+    je _start_if1_isDIV
 
 _start_if1_isADD:
     mov rax, QWORD [rbp + r10 + 8] ; 現在位置から1段下のスタックを取得
@@ -78,16 +94,12 @@ _start_if1_isADD:
 
     add r10, 8 ; スタックを一段下げる(加算するとオペランドが減るため)
 
-    inc r9
     jmp _start_loop1
 _start_if1_isDEC:
-    inc r9
     jmp _start_loop1
 _start_if1_isMUL:
-    inc r9
     jmp _start_loop1
 _start_if1_isDIV:
-    inc r9
     jmp _start_loop1
 _start_if1_exit:
     jmp _start_loop1
