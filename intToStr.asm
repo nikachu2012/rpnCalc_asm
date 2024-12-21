@@ -1,9 +1,9 @@
 section .text
 
 ; ===============================================================
-; rdiレジスタに入っている64bit値を10進文字列に変換し、bufから始まるメモリに格納する
+; rdiレジスタに入っている符号付き64bit値を10進文字列に変換し、bufから始まるメモリに格納する
 ; 文字列の最後にはNULLが追加される　64ビットを超える入力の動作は不定とする
-; bufは最大21バイト使う(2^64の桁数+NULL文字)
+; bufは最大22バイト使う(負数の符号+2^63の桁数+NULL文字)
 ;
 ; 24バイトのスタックを確保します
 ;
@@ -23,11 +23,16 @@ _intToStr:
 
     ; 最初から0のときの処理
     cmp rax, 0
+    jl  _intToStr_isNegative
     jne _intToStr_loop1 ; 呼び出し時に0でないとき
     
     mov BYTE [rbp + r8], '0' ; 呼び出し時に0なら'0'を積んで戻る
     dec r8
     jmp _intToStr_exit1
+
+_intToStr_isNegative:
+    neg rax ; 正の数に変換
+    ; loop1に続く
 
 _intToStr_loop1:
     ; 数値を文字に変換してスタックに積む
@@ -46,6 +51,16 @@ _intToStr_exit1:
     ; スタックからバッファに文字列をコピー
     mov r9, 0 ; ループカウンタ
     inc r8
+    
+    cmp rdi, 0
+    jl  _intToStr_addSign ; dataが負の数の時ジャンプ
+    
+    jmp _intToStr_loop2 ; dataが正の数の時
+
+_intToStr_addSign:
+    mov BYTE [rsi + r9], '-' ; -の符号を最初にコピー
+    inc r9
+    ; loop2に続く
 
 _intToStr_loop2:
     cmp r8, 0
