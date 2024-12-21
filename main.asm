@@ -23,7 +23,7 @@ _start:
 
     ; get argc
     cmp QWORD [rbp + 8], 2
-    jl errReturn ; argc < 2 なら戻る
+    jl missingUsageErr ; argc < 2 なら戻る
 
     ; get argv
     mov r8, QWORD [rbp + 16 + 8] ; 第1引数のアドレスをコピー
@@ -118,7 +118,7 @@ _start_exit1:
     mov rdx, buf_len
     syscall
 
-    leave
+    leave ; rsp<-rbp, pop rbp
 
     ; exit syscall
     mov rax, 60 ; syscall number 1 = exit
@@ -127,18 +127,32 @@ _start_exit1:
 
     ret
 
-errReturn:
+_start_stackBreakErr:
+    ; write syscall
+    mov rax, 1 ; write
+    mov rdi, 1 ; stdout
+    mov rsi, stackErrMsg ; エラーメッセージ
+    mov rdx, stackErrMsg_len
+    syscall
+
+    jmp errReturn
+
+missingUsageErr:
     ; write syscall
     mov rax, 1 ; write
     mov rdi, 1 ; stdout
     mov rsi, argLessMessage ; errMsg
     mov rdx, argLessMessage_len
-    syscall
+    syscall ; ArgLessMessageを出力
 
-    pop rbp
+    jmp errReturn
+    
+errReturn:
+    ; エラー終了
+    leave  ; rsp<-rbp, pop rbp
 
     mov rax, 60 ; syscall number 1 = exit
-    mov rdi, 0 ; return code
+    mov rdi, 1 ; return code
     syscall
     ret
 
@@ -164,3 +178,8 @@ teststr_len: equ $ - teststr - 1
 argLessMessage:
     db 'Usage: ./rpncalc "2 5 3 5+++"', 0x0a, 0
 argLessMessage_len: equ $ - argLessMessage - 1
+
+
+stackErrMsg:
+    db 'Missing operand', 0x0a, 0
+stackErrMsg_len: equ $ - stackErrMsg - 1
