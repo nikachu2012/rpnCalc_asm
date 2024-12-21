@@ -57,6 +57,11 @@ _start_if_notNumber:
     jg _start_if_operand      ; 前が数値でないときはスタックに積まずにオペランド処理に進む
 
     ; スタックに値を積む処理
+
+    ; スタックオーバーフローをチェック
+    cmp r10, STACK_DAN * -8
+    je _start_stackOverflowErr
+
     ; rdiはすでに入っている
     mov rsi, r9
     call _strToInt
@@ -74,7 +79,7 @@ _start_if_operand:
 
     ; スタックを破壊しないかチェック
     cmp r10, -16
-    jg _start_stackBreakErr 
+    jg _start_stackUnderflowErr 
 
     cmp BYTE [rdi - 1], '+' ; +のとき
     je _start_if1_isADD
@@ -127,12 +132,22 @@ _start_exit1:
 
     ret
 
-_start_stackBreakErr:
+_start_stackOverflowErr:
     ; write syscall
     mov rax, 1 ; write
     mov rdi, 1 ; stdout
-    mov rsi, stackErrMsg ; エラーメッセージ
-    mov rdx, stackErrMsg_len
+    mov rsi, stackOverflowMsg ; エラーメッセージ
+    mov rdx, stackOverflowMsg_len
+    syscall
+
+    jmp errReturn
+
+_start_stackUnderflowErr:
+    ; write syscall
+    mov rax, 1 ; write
+    mov rdi, 1 ; stdout
+    mov rsi, stackUnderflowMsg ; エラーメッセージ
+    mov rdx, stackUnderflowMsg_len
     syscall
 
     jmp errReturn
@@ -179,7 +194,10 @@ argLessMessage:
     db 'Usage: ./rpncalc "2 5 3 5+++"', 0x0a, 0
 argLessMessage_len: equ $ - argLessMessage - 1
 
+stackUnderflowMsg:
+    db 'Stack underflowed. (TOOOOOO MANY CALC OPERANDS)', 0x0a, 0
+stackUnderflowMsg_len: equ $ - stackUnderflowMsg - 1
 
-stackErrMsg:
-    db 'Missing operand', 0x0a, 0
-stackErrMsg_len: equ $ - stackErrMsg - 1
+stackOverflowMsg:
+    db 'Stack overflowed. (TOOOOOO MANY NUMBER OPERANDS)', 0x0a, 0
+stackOverflowMsg_len: equ $ - stackOverflowMsg - 1
