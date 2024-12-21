@@ -1,6 +1,7 @@
 TARGET = rpncalc
-SRCS = main.asm
-OBJS = $(SRCS:.asm=.o)
+MAIN = main.asm
+DEP = $(filter-out $(MAIN), $(wildcard *.asm))
+MAINOBJ = $(MAIN:.asm=.o)
 
 .PHONY: all
 all: $(TARGET)
@@ -9,8 +10,6 @@ all: $(TARGET)
 clean:
 	rm -r *.o $(TARGET)
 
-$(TARGET): $(OBJS)
-	ld -m elf_x86_64 -o $(TARGET) $(OBJS)
-
-%.o: %.asm
-	nasm -f elf64 -o $@ $<
+$(TARGET): $(DEP)
+	nasm -f elf64 -o $(MAINOBJ) $(MAIN)
+	ld -m elf_x86_64 -o $(TARGET) $(MAINOBJ)
