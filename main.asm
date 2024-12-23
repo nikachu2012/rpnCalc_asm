@@ -14,13 +14,19 @@ global _start
 ; 楽しちゃダメだから
 ; by BASIC
 
+; ===============================================================
+; 第1引数に与えられたポインタから第2引数文字分標準出力に出力するマクロ
+;
+; example: stdout buf, buflen
+; 破壊レジスタ: rax, rdi, rsi, rdx
+; ===============================================================
 %macro stdout 2
     ; write syscall
     mov rax, 1 ; write
     mov rdi, 1 ; stdout
     mov rsi, %1 ; errMsg
     mov rdx, %2
-    syscall ; ArgLessMessageを出力
+    syscall
 %endmacro
 
 section .text
