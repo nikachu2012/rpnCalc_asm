@@ -108,6 +108,9 @@ _start_if_operand:
     cmp BYTE [rdi - 1], '/' ; /のとき
     je _start_if1_isDIV
 
+    ; 存在しない演算子の時
+    jmp _start_undefinedOperator
+
 _start_if1_isADD:
     mov rax, QWORD [rbp + r10 + 8] ; 現在位置から1段下のスタックを取得
     add QWORD [rbp + r10 + 16], rax  ; 2段下と1段下を加算
@@ -175,11 +178,17 @@ _start_zeroDivErr:
     stdout zeroDivMsg, zeroDivMsg_len
 
     jmp errReturn
+
 _start_missingUsageErr:
     stdout argLessMessage, argLessMessage_len
 
     jmp errReturn
-    
+
+_start_undefinedOperator:
+    stdout undefinedOperator, undefinedOperator_len
+
+    jmp errReturn
+
 errReturn:
     ; エラー終了
     leave  ; rsp<-rbp, pop rbp
@@ -215,3 +224,7 @@ stackOverflowMsg_len: equ $ - stackOverflowMsg - 1
 zeroDivMsg:
     db 'Cannot be divided by 0.', 0x0a, 0
 zeroDivMsg_len: equ $ - zeroDivMsg - 1
+
+undefinedOperator:
+    db 'Undefined operator is detected.', 0x0a, 0
+undefinedOperator_len: equ $ - undefinedOperator - 1
